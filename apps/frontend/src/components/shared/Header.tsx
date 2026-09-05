@@ -7,7 +7,7 @@ export default function Header() {
           p2p
         </span>
       </div>
-      <a
+      {/* <a
         href="https://www.buymeacoffee.com/sourabh0003"
         className="flex items-center gap-2.5 rounded-full bg-surface px-4.5 py-2.5 text-sm font-medium whitespace-nowrap text-foreground transition-colors hover:bg-surface-strong hover:text-accent-lime"
         target="_blank"
@@ -31,7 +31,7 @@ export default function Header() {
           <path d="M10.5 3.2v1.2" />
         </svg>
         Buy me a coffee
-      </a>
+      </a> */}
     </header>
   );
 }
