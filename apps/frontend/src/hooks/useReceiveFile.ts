@@ -99,7 +99,9 @@ export function useReceiveFile(roomId: string | undefined) {
   useEffect(() => {
     if (!roomId) return;
 
-    const signalingChannel = new WebSocket(SIGNALING_URL);
+    const signalingChannel = new WebSocket(
+      `${SIGNALING_URL}?roomId=${encodeURIComponent(roomId)}`,
+    );
     signalingChannelRef.current = signalingChannel;
 
     // Encrypts the payload when a passphrase key exists; otherwise sends it as-is.
