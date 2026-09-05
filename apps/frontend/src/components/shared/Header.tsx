@@ -8,8 +8,10 @@ export default function Header() {
         </span>
       </div>
       <a
-        href="#coffee"
+        href="https://www.buymeacoffee.com/sourabh0003"
         className="flex items-center gap-2.5 rounded-full bg-surface px-4.5 py-2.5 text-sm font-medium whitespace-nowrap text-foreground transition-colors hover:bg-surface-strong hover:text-accent-lime"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         <svg
           width="16"

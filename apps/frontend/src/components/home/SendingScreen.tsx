@@ -67,7 +67,7 @@ export default function SendingScreen({
           {codeLabel}
         </div>
         <div className="mt-2.5 flex flex-wrap items-center gap-5">
-          <span className="font-mono text-2xl font-bold text-accent-violet sm:text-3xl lg:text-4xl">
+          <span className="text-2xl font-bold text-accent-violet sm:text-3xl lg:text-4xl">
             {codeValue}
           </span>
           <Button
