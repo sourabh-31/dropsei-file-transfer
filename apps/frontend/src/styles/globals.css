@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-bricolage);
+  --font-mono: var(--font-space-mono);
+
+  /* Dropsei design tokens */
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-strong-hover: var(--surface-strong-hover);
+
+  --color-border-subtle: var(--border-subtle);
+
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-muted-faint: var(--muted-faint);
+  --color-label: var(--label);
+
+  --color-accent-lime: var(--accent-lime);
+  --color-accent-lime-hover: var(--accent-lime-hover);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-violet-muted: var(--accent-violet-muted);
+  --color-accent-coral: var(--accent-coral);
+  --color-accent-coral-hover: var(--accent-coral-hover);
+  --color-accent-coral-soft: var(--accent-coral-soft);
+  --color-accent-olive: var(--accent-olive);
+}
+
+:root {
+  --background: #16121f;
+  --foreground: #ede9f5;
+
+  --surface: #1f1a2b;
+  --surface-strong: #2a2338;
+  --surface-strong-hover: #3a3150;
+
+  --border-subtle: #241d31;
+
+  --muted: #9a93ad;
+  --muted-soft: #b6aeca;
+  --muted-faint: #6f677f;
+  --label: #7e7691;
+
+  --accent-lime: #c9f25c;
+  --accent-lime-hover: #d9ff7e;
+  --accent-violet: #b49bff;
+  --accent-violet-muted: #6b5c93;
+  --accent-coral: #ff8f6b;
+  --accent-coral-hover: #ffb59e;
+  --accent-coral-soft: #ffc0ab;
+  --accent-olive: #8fa845;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  input::placeholder {
+    @apply text-muted-faint;
+  }
+}

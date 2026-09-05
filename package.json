@@ -1,0 +1,11 @@
+{
+  "name": "dropsei-file-transfer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter frontend --filter backend dev",
+    "build": "pnpm --parallel --filter frontend --filter backend build",
+    "test": "pnpm --parallel --filter frontend --filter backend test"
+  },
+  "packageManager": "pnpm@10.33.0"
+}
