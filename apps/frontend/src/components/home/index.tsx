@@ -108,7 +108,7 @@ export default function Home() {
     >
       <Header />
 
-      <main className="mx-auto flex w-full max-w-310 flex-1 flex-col px-6 pb-36 sm:px-10 sm:pb-28">
+      <main className="mx-auto flex w-full max-w-310 flex-1 flex-col px-6 pb-10 sm:px-10 sm:pb-16">
         {screen === "drop" && <DropScreen onPickFiles={pickFiles} />}
         {screen === "staged" && <StagedScreen onOpenChannel={onOpenChannel} />}
         {screen === "sending" && (

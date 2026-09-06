@@ -30,26 +30,30 @@ export default function StagedScreen({ onOpenChannel }: StagedScreenProps) {
           {files.map((f, i) => (
             <div
               key={f.id}
-              className="flex items-baseline gap-4.5 border-b border-border-subtle py-4.5"
+              className="flex flex-col gap-2 border-b border-border-subtle py-4.5 sm:flex-row sm:items-baseline sm:gap-4.5"
             >
-              <span className="font-mono text-xs text-muted-faint">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="flex-1 truncate text-lg font-medium">
-                {f.name}
-              </span>
-              <span className="font-mono text-xs text-muted-soft">
-                {formatBytes(f.bytes)}
-              </span>
-              <span className="font-mono text-xs tracking-wide text-muted-faint uppercase">
-                {f.kind}
-              </span>
-              <button
-                onClick={() => removeFile(f.id)}
-                className="cursor-pointer bg-transparent text-sm text-muted-faint transition-colors hover:text-accent-coral"
-              >
-                drop
-              </button>
+              <div className="flex min-w-0 items-baseline gap-4.5 sm:flex-1">
+                <span className="shrink-0 font-mono text-xs text-muted-faint">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-lg font-medium">
+                  {f.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-4.5">
+                <span className="font-mono text-xs text-muted-soft">
+                  {formatBytes(f.bytes)}
+                </span>
+                <span className="font-mono text-xs tracking-wide text-muted-faint uppercase">
+                  {f.kind}
+                </span>
+                <button
+                  onClick={() => removeFile(f.id)}
+                  className="cursor-pointer bg-transparent text-sm text-muted-faint transition-colors hover:text-accent-coral"
+                >
+                  drop
+                </button>
+              </div>
             </div>
           ))}
         </div>
