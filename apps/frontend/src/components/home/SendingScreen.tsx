@@ -5,6 +5,7 @@ import { getVisualChunkBytes, getVisualChunkCount } from "@/lib/chunkGrid";
 import { useTransferStore } from "@/store/store";
 import type { SendProgress, SendStatus } from "@/hooks/useSendFile";
 import ChunkGrid from "../shared/ChunkGrid";
+import { BeautifulQRCode } from "@beautiful-qr-code/react";
 
 interface SendingScreenProps {
   roomId: string | null;
@@ -117,6 +118,19 @@ export default function SendingScreen({
       </div>
 
       <div className="rounded-lg bg-surface p-5.5">
+        <div className="relative size-40">
+          <BeautifulQRCode
+            data={transferLink}
+            foregroundColor="#fff"
+            className="size-40"
+          />
+
+          {!roomLink && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/40 backdrop-blur-[2px]">
+              <div className="size-5 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground" />
+            </div>
+          )}
+        </div>
         <div className="mt-5.5 flex items-end justify-between gap-4">
           <span className="text-4xl leading-none font-extrabold tracking-tight">
             {Math.round(percent)}%

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@beautiful-qr-code/react':
+        specifier: ^1.0.11
+        version: 1.0.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@vinext/cloudflare':
         specifier: 1.0.0-beta.7
         version: 1.0.0-beta.7(vinext@1.0.0-beta.9(@vitejs/plugin-react@6.1.1(vite@8.2.2(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)))(@vitejs/plugin-rsc@0.5.34(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.110.3(esbuild@0.28.1)))(react@19.2.8)(vite@8.2.2(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)))(next@16.3.4(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react-server-dom-webpack@19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.110.3(esbuild@0.28.1)))(react@19.2.8)(vite@8.2.2(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)))
@@ -142,6 +145,12 @@ packages:
   '@babel/types@7.29.8':
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
+
+  '@beautiful-qr-code/react@1.0.11':
+    resolution: {integrity: sha512-NB9AndXCwOh9KHThDggGAgWLMsemjsOibv/NsxmkoQlz16xpVi6C1NCK774Grk+0RG3Zffc5oTRnleiMHxeGqg==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -1496,6 +1505,9 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
+  beautiful-qr-code@1.0.11:
+    resolution: {integrity: sha512-+USurzGxAOqoKbh7qGJw2SzJBtA4678/qo7QnFdY/DwfblwfB9p4Big7p9f2mAmzQQM/AKwhqKx4pWcfmImzmQ==}
+
   blake3-wasm@2.1.5:
     resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
 
@@ -2636,6 +2648,9 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  qrcode-generator@2.0.4:
+    resolution: {integrity: sha512-mZSiP6RnbHl4xL2Ap5HfkjLnmxfKcPWpWe/c+5XxCuetEenqmNFf1FH/ftXPCtFG5/TDobjsjz6sSNL0Sr8Z9g==}
+
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
@@ -3263,6 +3278,12 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@beautiful-qr-code/react@1.0.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      beautiful-qr-code: 1.0.11
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
@@ -4345,6 +4366,10 @@ snapshots:
   base64-js@0.0.8: {}
 
   baseline-browser-mapping@2.11.21: {}
+
+  beautiful-qr-code@1.0.11:
+    dependencies:
+      qrcode-generator: 2.0.4
 
   blake3-wasm@2.1.5: {}
 
@@ -5559,6 +5584,8 @@ snapshots:
       react-is: 16.13.1
 
   punycode@2.3.1: {}
+
+  qrcode-generator@2.0.4: {}
 
   queue-microtask@1.2.3: {}
 
