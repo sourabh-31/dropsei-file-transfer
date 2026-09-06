@@ -68,7 +68,7 @@ export default function StagedScreen({ onOpenChannel }: StagedScreenProps) {
           type="text"
           value={pass}
           onChange={(e) => setPass(e.target.value)}
-          placeholder="Leave empty for link only"
+          placeholder="Leave blank for link"
           className="mt-4.5 w-full rounded-md border border-surface-strong bg-background px-4 py-3.5 font-mono text-sm text-foreground"
         />
         <Button onClick={onOpenChannel} className="mt-6 w-full">

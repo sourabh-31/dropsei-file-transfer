@@ -56,7 +56,6 @@ export default function ClaimScreen({
             autoFocus
             value={passphrase}
             onChange={(e) => setPassphrase(e.target.value)}
-            placeholder="Enter passphrase"
             className="w-full rounded-md border border-surface-strong bg-background px-4 py-3.5 text-center font-mono text-sm text-foreground"
           />
           {passphraseError && (
