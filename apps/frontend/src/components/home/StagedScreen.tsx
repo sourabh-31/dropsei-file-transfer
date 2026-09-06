@@ -36,11 +36,11 @@ export default function StagedScreen({ onOpenChannel }: StagedScreenProps) {
                 <span className="shrink-0 font-mono text-xs text-muted-faint">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-lg font-medium">
+                <span className="min-w-0 flex-1 text-lg font-medium">
                   {f.name}
                 </span>
               </div>
-              <div className="flex items-center gap-4.5">
+              <div className="flex items-center justify-end gap-4.5">
                 <span className="font-mono text-xs text-muted-soft">
                   {formatBytes(f.bytes)}
                 </span>

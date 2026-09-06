@@ -4,7 +4,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-bricolage);
-  --font-mono: var(--font-space-mono);
+  --font-mono: var(--font-glide-mono);
 
   /* Dropsei design tokens */
   --color-surface: var(--surface);
