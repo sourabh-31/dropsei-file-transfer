@@ -50,7 +50,7 @@ export default function ReceivingScreen({
           {headline}
         </h2>
         <div className="mt-10 flex flex-wrap items-end gap-6.5">
-          <span className="text-6xl leading-[0.85] font-extrabold tracking-tighter text-accent-lime sm:text-7xl lg:text-8xl">
+          <span className="text-6xl leading-[0.85] font-bold tracking-tighter text-accent-lime sm:text-7xl lg:text-8xl">
             {Math.round(percent)}%
           </span>
           <div className="font-mono text-xs leading-loose text-muted">

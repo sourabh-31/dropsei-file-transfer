@@ -29,11 +29,11 @@ const bricolageGrotesque = localFont({
   ],
 });
 
-const glideMono = localFont({
-  variable: "--font-glide-mono",
+const spaceMono = localFont({
+  variable: "--font-space-mono",
   src: [
     {
-      path: "../../public/fonts/glide-mono-400.woff2",
+      path: "../../public/fonts/space-mono-400.woff2",
       weight: "400",
       style: "normal",
     },
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bricolageGrotesque.variable} ${glideMono.variable} h-full antialiased`}
+      className={`${bricolageGrotesque.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
