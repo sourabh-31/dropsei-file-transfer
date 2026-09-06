@@ -20,7 +20,6 @@ export type ReceiveStatus =
   | "passphrase"
   | "waiting"
   | "receiving"
-  | "reconnecting"
   | "failed"
   | "done"
   | "error";
@@ -32,10 +31,6 @@ export interface ReceiveProgress {
 }
 
 const PROGRESS_THROTTLE_MS = 120;
-
-// How long auto-resume quietly retries before surfacing the manual retry control.
-const AUTO_RESUME_TIMEOUT_MS = 20_000;
-const AUTO_RESUME_INTERVAL_MS = 3_000;
 
 export function useReceiveFile(roomId: string | undefined) {
   const [status, setStatus] = useState<ReceiveStatus>("connecting");
@@ -49,52 +44,19 @@ export function useReceiveFile(roomId: string | undefined) {
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const signalingChannelRef = useRef<WebSocket | null>(null);
-  const [attempt, setAttempt] = useState(0);
 
   const [passphraseError, setPassphraseError] = useState(false);
   const attemptedPassphraseRef = useRef(false);
-  // Kept across reconnects so an auto-resume attempt can re-present it without asking again.
+  // Kept across retries so a re-attempt can re-present it without asking again.
   const passphraseRef = useRef<string>("");
   // Resolves to null when the room has no passphrase, so callers can always await it.
   const roomKeyPromiseRef = useRef<Promise<CryptoKey | null>>(
     Promise.resolve(null),
   );
 
-  // Survive reconnects so a resumed transfer continues from what's already been written.
   const metadataRef = useRef<FileMetadata | null>(null);
   const receivedChunksRef = useRef<ArrayBuffer[]>([]);
   const receivedBytesRef = useRef(0);
-
-  const reconnectTimersRef = useRef<{
-    interval: ReturnType<typeof setInterval>;
-    timeout: ReturnType<typeof setTimeout>;
-  } | null>(null);
-
-  const clearAutoResumeCampaign = useCallback(() => {
-    if (!reconnectTimersRef.current) return;
-    clearInterval(reconnectTimersRef.current.interval);
-    clearTimeout(reconnectTimersRef.current.timeout);
-    reconnectTimersRef.current = null;
-  }, []);
-
-  const startAutoResumeCampaign = useCallback(() => {
-    if (reconnectTimersRef.current) return;
-
-    setStatus("reconnecting");
-    setAttempt((a) => a + 1);
-
-    const interval = setInterval(() => {
-      setAttempt((a) => a + 1);
-    }, AUTO_RESUME_INTERVAL_MS);
-
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      reconnectTimersRef.current = null;
-      setStatus("failed");
-    }, AUTO_RESUME_TIMEOUT_MS);
-
-    reconnectTimersRef.current = { interval, timeout };
-  }, []);
 
   useEffect(() => {
     if (!roomId) return;
@@ -130,19 +92,10 @@ export function useReceiveFile(roomId: string | undefined) {
 
     let transferStart = 0;
     let lastProgressAt = 0;
-    let attemptStartBytes = receivedBytesRef.current;
 
     function handleDisconnect() {
-      const metadata = metadataRef.current;
-      if (!metadata) {
-        // Never got metadata — an initial connection problem, not a transfer to resume.
-        setStatus("error");
-        return;
-      }
-
-      if (receivedBytesRef.current >= metadata.size) return; // already done
-
-      startAutoResumeCampaign();
+      // A disconnect after a successful download is just normal teardown.
+      setStatus((prev) => (prev === "done" ? prev : "failed"));
     }
 
     function createPeerConnection() {
@@ -175,16 +128,6 @@ export function useReceiveFile(roomId: string | undefined) {
     function setupDataChannel(channel: RTCDataChannel) {
       channel.binaryType = "arraybuffer";
 
-      channel.addEventListener("open", () => {
-        // Report bytes already held so the sender can resume instead of restarting.
-        channel.send(
-          JSON.stringify({
-            type: "resume",
-            receivedBytes: receivedBytesRef.current,
-          }),
-        );
-      });
-
       channel.addEventListener("message", (event) => {
         if (typeof event.data === "string") {
           const message = JSON.parse(event.data);
@@ -193,9 +136,7 @@ export function useReceiveFile(roomId: string | undefined) {
             metadataRef.current = message;
             transferStart = performance.now();
             lastProgressAt = 0;
-            attemptStartBytes = receivedBytesRef.current;
 
-            clearAutoResumeCampaign();
             setFileMetadata(message);
             setStatus("receiving");
             setProgress({
@@ -223,10 +164,9 @@ export function useReceiveFile(roomId: string | undefined) {
         if (isDone || now - lastProgressAt >= PROGRESS_THROTTLE_MS) {
           lastProgressAt = now;
           const elapsedSeconds = (now - transferStart) / 1000;
-          const bytesThisAttempt = receivedBytesRef.current - attemptStartBytes;
           const rateMBps =
             elapsedSeconds > 0
-              ? bytesThisAttempt / 1024 / 1024 / elapsedSeconds
+              ? receivedBytesRef.current / 1024 / 1024 / elapsedSeconds
               : 0;
           setProgress({
             receivedBytes: receivedBytesRef.current,
@@ -249,7 +189,7 @@ export function useReceiveFile(roomId: string | undefined) {
       createPeerConnection();
 
       (async () => {
-        // Re-present a passphrase already validated earlier so a reconnect doesn't ask again.
+        // Re-present a passphrase already validated earlier so a retry doesn't ask again.
         const passphraseHash = passphraseRef.current
           ? await hashPassphrase(passphraseRef.current)
           : undefined;
@@ -265,8 +205,7 @@ export function useReceiveFile(roomId: string | undefined) {
 
       if (message.type === "room-joined") {
         setPassphraseError(false);
-        // Don't clobber the "reconnecting" status with "waiting" mid-campaign.
-        if (!metadataRef.current) setStatus("waiting");
+        setStatus("waiting");
         return;
       }
 
@@ -308,8 +247,6 @@ export function useReceiveFile(roomId: string | undefined) {
       }
 
       if (message.type === "error") {
-        // Backend confirmed the room is gone — definitive, so stop auto-resuming now.
-        clearAutoResumeCampaign();
         setStatus("error");
         console.error(message.message);
       }
@@ -319,21 +256,11 @@ export function useReceiveFile(roomId: string | undefined) {
       signalingChannel.close();
       peerConnectionRef.current?.close();
     };
-  }, [roomId, attempt, clearAutoResumeCampaign, startAutoResumeCampaign]);
-
-  useEffect(() => clearAutoResumeCampaign, [clearAutoResumeCampaign]);
+  }, [roomId]);
 
   const retry = useCallback(() => {
-    clearAutoResumeCampaign();
-    metadataRef.current = null;
-    receivedChunksRef.current = [];
-    receivedBytesRef.current = 0;
-    setStatus("connecting");
-    setFileMetadata(null);
-    setDownloadUrl(null);
-    setProgress({ receivedBytes: 0, totalBytes: 0, rateMBps: 0 });
-    setAttempt((a) => a + 1);
-  }, [clearAutoResumeCampaign]);
+    window.location.reload();
+  }, []);
 
   const submitPassphrase = useCallback(
     (passphrase: string) => {

@@ -112,7 +112,7 @@ export default function ClaimScreen({
           Accept and download
         </Button>
         <span className="text-sm text-muted">
-          Resumes on its own if the line drops
+          Comes straight from their device, no server in between
         </span>
       </div>
     </div>

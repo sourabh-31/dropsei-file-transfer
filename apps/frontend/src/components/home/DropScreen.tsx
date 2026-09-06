@@ -14,8 +14,8 @@ const FEATURES = [
     body: "Only on your device and theirs. We keep no copy, and the link stops working when you close the tab.",
   },
   {
-    title: "Resumes itself",
-    body: "The parts already received are kept. When you are back online it carries on instead of starting again.",
+    title: "Peer to peer",
+    body: "Files move straight from your device to theirs over a direct connection. No relay server in between.",
   },
   {
     title: "Password optional",

@@ -60,11 +60,10 @@ export async function sendFileInChunks(
   file: File,
   dataChannel: RTCDataChannel,
   onProgress?: (sentBytes: number) => void,
-  startOffset = 0,
 ) {
   dataChannel.bufferedAmountLowThreshold = BUFFERED_AMOUNT_LOW_THRESHOLD;
 
-  let offset = startOffset;
+  let offset = 0;
 
   while (offset < file.size) {
     if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {

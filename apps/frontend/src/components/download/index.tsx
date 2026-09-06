@@ -34,7 +34,7 @@ export default function Download() {
           <ConnectionFailed message="The link may be wrong, expired, or the sender has closed the tab." />
         ) : status === "failed" ? (
           <ConnectionFailed
-            message="The sender's connection was lost and couldn't be re-established automatically."
+            message="The connection was lost. The sender may still be there — try again."
             onRetry={retry}
           />
         ) : !accepted ? (

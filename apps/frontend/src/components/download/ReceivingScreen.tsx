@@ -19,7 +19,6 @@ export default function ReceivingScreen({
   progress,
 }: ReceivingScreenProps) {
   const isDone = status === "done";
-  const isReconnecting = status === "reconnecting";
 
   const total = progress.totalBytes || fileMetadata?.size || 0;
   const percent = total > 0 ? (progress.receivedBytes / total) * 100 : 0;
@@ -36,11 +35,9 @@ export default function ReceivingScreen({
       : 0;
   const eta = isDone
     ? "0s"
-    : isReconnecting
-      ? "--"
-      : etaSeconds > 90
-        ? `${Math.round(etaSeconds / 60)} min`
-        : `${Math.max(1, Math.round(etaSeconds))} s`;
+    : etaSeconds > 90
+      ? `${Math.round(etaSeconds / 60)} min`
+      : `${Math.max(1, Math.round(etaSeconds))} s`;
 
   const headline = isDone
     ? `${formatBytes(total)} landed`
@@ -52,11 +49,6 @@ export default function ReceivingScreen({
         <h2 className="m-0 text-3xl leading-none font-extrabold tracking-tight sm:text-4xl md:text-5xl">
           {headline}
         </h2>
-        {isReconnecting && (
-          <div className="mt-3 font-mono text-xs tracking-widest text-accent-violet">
-            RECONNECTING…
-          </div>
-        )}
         <div className="mt-10 flex flex-wrap items-end gap-6.5">
           <span className="text-6xl leading-[0.85] font-extrabold tracking-tighter text-accent-lime sm:text-7xl lg:text-8xl">
             {Math.round(percent)}%
@@ -64,8 +56,7 @@ export default function ReceivingScreen({
           <div className="font-mono text-xs leading-loose text-muted">
             {formatBytes(progress.receivedBytes)} of {formatBytes(total)}
             <br />
-            {isReconnecting ? "0.0" : progress.rateMBps.toFixed(1)} MB/s ·{" "}
-            {eta} left
+            {progress.rateMBps.toFixed(1)} MB/s · {eta} left
             <br />
             chunk {chunkDone} / {chunkTotal}
           </div>

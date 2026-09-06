@@ -44,9 +44,7 @@ export function useSendFile(enabled: boolean) {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const selectedFileRef = useRef<File | null>(null);
-  const sendFileRef = useRef<(startOffset: number) => Promise<void>>(
-    async () => {},
-  );
+  const sendFileRef = useRef<() => Promise<void>>(async () => {});
 
   const passphraseRef = useRef<string>("");
   // Resolves to null when no passphrase was set, so callers can always await it.
@@ -109,7 +107,7 @@ export function useSendFile(enabled: boolean) {
       return connection;
     }
 
-    async function sendFile(startOffset: number) {
+    async function sendFile() {
       const file = selectedFileRef.current;
       const dataChannel = dataChannelRef.current;
 
@@ -125,34 +123,28 @@ export function useSendFile(enabled: boolean) {
       );
 
       setStatus("sending");
-      setProgress({ sentBytes: startOffset, totalBytes: file.size, rateMBps: 0 });
+      setProgress({ sentBytes: 0, totalBytes: file.size, rateMBps: 0 });
 
       const transferStart = performance.now();
       let lastProgressAt = 0;
 
       try {
-        await sendFileInChunks(
-          file,
-          dataChannel,
-          (sentBytes) => {
-            const now = performance.now();
-            const isDone = sentBytes >= file.size;
-            if (!isDone && now - lastProgressAt < PROGRESS_THROTTLE_MS) return;
-            lastProgressAt = now;
+        await sendFileInChunks(file, dataChannel, (sentBytes) => {
+          const now = performance.now();
+          const isDone = sentBytes >= file.size;
+          if (!isDone && now - lastProgressAt < PROGRESS_THROTTLE_MS) return;
+          lastProgressAt = now;
 
-            const elapsedSeconds = (now - transferStart) / 1000;
-            const bytesThisAttempt = sentBytes - startOffset;
-            const rateMBps =
-              elapsedSeconds > 0
-                ? bytesThisAttempt / 1024 / 1024 / elapsedSeconds
-                : 0;
+          const elapsedSeconds = (now - transferStart) / 1000;
+          const rateMBps =
+            elapsedSeconds > 0
+              ? sentBytes / 1024 / 1024 / elapsedSeconds
+              : 0;
 
-            setProgress({ sentBytes, totalBytes: file.size, rateMBps });
-          },
-          startOffset,
-        );
+          setProgress({ sentBytes, totalBytes: file.size, rateMBps });
+        });
       } catch {
-        // Channel died mid-send; the next "resume" handshake picks up from where the receiver left off.
+        // Channel died mid-send; a fresh peer-joined handshake starts the file over from scratch.
         return;
       }
 
@@ -184,14 +176,8 @@ export function useSendFile(enabled: boolean) {
         const dataChannel = peerConnection.createDataChannel("data");
         dataChannelRef.current = dataChannel;
 
-        // Receiver reports its existing byte count first, before we send anything, so a reconnect resumes instead of restarting.
-        dataChannel.addEventListener("message", (event) => {
-          if (typeof event.data !== "string") return;
-
-          const resumeMessage = JSON.parse(event.data);
-          if (resumeMessage.type === "resume") {
-            sendFile(resumeMessage.receivedBytes ?? 0);
-          }
+        dataChannel.addEventListener("open", () => {
+          sendFile();
         });
 
         const offer = await peerConnection.createOffer();
@@ -261,7 +247,7 @@ export function useSendFile(enabled: boolean) {
     if (!file) return;
 
     // If a connection is already open, send immediately.
-    sendFileRef.current(0);
+    sendFileRef.current();
   }, []);
 
   return { roomId, roomLink, status, progress, createRoom, handleFileSelect };
