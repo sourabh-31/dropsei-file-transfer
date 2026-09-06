@@ -76,3 +76,61 @@ export async function sendFileInChunks(
     onProgress?.(offset);
   }
 }
+
+export function createPeerConnection(
+  iceServers: RTCConfiguration,
+  onIceCandidate: (candidate: RTCIceCandidate) => void,
+): RTCPeerConnection {
+  const connection = new RTCPeerConnection(iceServers);
+
+  connection.addEventListener("icecandidate", (event) => {
+    if (event.candidate) onIceCandidate(event.candidate);
+  });
+
+  return connection;
+}
+
+export interface FileReceiverCallbacks {
+  onMetadata: (metadata: FileMetadata) => void;
+  onProgress: (receivedBytes: number) => void;
+  onComplete: (file: Blob) => void;
+}
+
+// Reassembles a file sent as a leading JSON metadata message followed by
+// binary chunks. State lives outside attach() so it survives being called
+// again for a new data channel (e.g. after a peer reconnect).
+export function createFileReceiver(callbacks: FileReceiverCallbacks) {
+  let metadata: FileMetadata | null = null;
+  const chunks: ArrayBuffer[] = [];
+  let receivedBytes = 0;
+
+  function attach(channel: RTCDataChannel) {
+    channel.binaryType = "arraybuffer";
+
+    channel.addEventListener("message", (event) => {
+      if (typeof event.data === "string") {
+        const message = JSON.parse(event.data);
+        if (message.type === "metadata") {
+          metadata = message;
+          callbacks.onMetadata(message);
+        }
+        return;
+      }
+
+      if (!metadata) {
+        console.error("Received file before metadata");
+        return;
+      }
+
+      chunks.push(event.data);
+      receivedBytes += event.data.byteLength;
+      callbacks.onProgress(receivedBytes);
+
+      if (receivedBytes >= metadata.size) {
+        callbacks.onComplete(new Blob(chunks, { type: metadata.mimeType }));
+      }
+    });
+  }
+
+  return { attach };
+}

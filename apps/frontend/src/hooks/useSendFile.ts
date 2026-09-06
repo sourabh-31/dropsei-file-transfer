@@ -4,16 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ICE_SERVERS,
   SIGNALING_URL,
+  createPeerConnection,
   sendFileInChunks,
   sendWhenOpen,
 } from "@/lib/webrtc";
-import {
-  decryptPayload,
-  deriveRoomKey,
-  encryptPayload,
-  hashPassphrase,
-  type EncryptedPayload,
-} from "@/lib/crypto";
+import { createSignalingClient, type SignalingClient } from "@/lib/signaling";
+import { createProgressTracker } from "@/lib/transferProgress";
+import { deriveRoomKey, hashPassphrase } from "@/lib/crypto";
 
 export type SendStatus =
   | "idle"
@@ -28,8 +25,6 @@ export interface SendProgress {
   rateMBps: number;
 }
 
-const PROGRESS_THROTTLE_MS = 120;
-
 export function useSendFile(enabled: boolean) {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [roomLink, setRoomLink] = useState<string | null>(null);
@@ -40,7 +35,7 @@ export function useSendFile(enabled: boolean) {
     rateMBps: 0,
   });
 
-  const signalingChannelRef = useRef<WebSocket | null>(null);
+  const signalingRef = useRef<SignalingClient | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const selectedFileRef = useRef<File | null>(null);
@@ -63,47 +58,21 @@ export function useSendFile(enabled: boolean) {
     setStatus("idle");
     setProgress({ sentBytes: 0, totalBytes: 0, rateMBps: 0 });
 
-    const signalingChannel = new WebSocket(SIGNALING_URL);
-    signalingChannelRef.current = signalingChannel;
+    const signaling = createSignalingClient(
+      SIGNALING_URL,
+      () => roomKeyPromiseRef.current,
+    );
+    signalingRef.current = signaling;
 
-    // Encrypts the payload when a passphrase key exists; otherwise sends it as-is.
-    async function sendSignal(type: string, payload: Record<string, unknown>) {
-      const key = await roomKeyPromiseRef.current;
-
-      if (key) {
-        const encrypted = await encryptPayload(key, payload);
-        signalingChannel.send(JSON.stringify({ type, encrypted }));
-      } else {
-        signalingChannel.send(JSON.stringify({ type, ...payload }));
-      }
-    }
-
-    // Decrypts an incoming message when it carries an encrypted blob; otherwise passes it through.
-    async function unwrapSignal<T>(message: {
-      encrypted?: EncryptedPayload;
-    }): Promise<T> {
-      if (!message.encrypted) return message as unknown as T;
-
-      const key = await roomKeyPromiseRef.current;
-      if (!key) throw new Error("Received encrypted signal without a room key");
-
-      return decryptPayload<T>(key, message.encrypted);
-    }
-
-    function createPeerConnection() {
+    function openPeerConnection() {
       // Close any previous connection first so it can't leak or leave a send loop hanging.
       peerConnectionRef.current?.close();
 
-      const connection = new RTCPeerConnection(ICE_SERVERS);
-
-      connection.addEventListener("icecandidate", (event) => {
-        if (!event.candidate) return;
-
-        sendSignal("ice-candidate", { candidate: event.candidate });
+      const connection = createPeerConnection(ICE_SERVERS, (candidate) => {
+        signaling.send("ice-candidate", { candidate });
       });
 
       peerConnectionRef.current = connection;
-
       return connection;
     }
 
@@ -125,23 +94,18 @@ export function useSendFile(enabled: boolean) {
       setStatus("sending");
       setProgress({ sentBytes: 0, totalBytes: file.size, rateMBps: 0 });
 
-      const transferStart = performance.now();
-      let lastProgressAt = 0;
+      const trackProgress = createProgressTracker(file.size);
 
       try {
         await sendFileInChunks(file, dataChannel, (sentBytes) => {
-          const now = performance.now();
-          const isDone = sentBytes >= file.size;
-          if (!isDone && now - lastProgressAt < PROGRESS_THROTTLE_MS) return;
-          lastProgressAt = now;
+          const sample = trackProgress(sentBytes);
+          if (!sample) return;
 
-          const elapsedSeconds = (now - transferStart) / 1000;
-          const rateMBps =
-            elapsedSeconds > 0
-              ? sentBytes / 1024 / 1024 / elapsedSeconds
-              : 0;
-
-          setProgress({ sentBytes, totalBytes: file.size, rateMBps });
+          setProgress({
+            sentBytes: sample.transferredBytes,
+            totalBytes: sample.totalBytes,
+            rateMBps: sample.rateMBps,
+          });
         });
       } catch {
         // Channel died mid-send; a fresh peer-joined handshake starts the file over from scratch.
@@ -153,71 +117,73 @@ export function useSendFile(enabled: boolean) {
 
     sendFileRef.current = sendFile;
 
-    signalingChannel.addEventListener("message", async (event) => {
+    signaling.socket.addEventListener("message", async (event) => {
       const message = JSON.parse(event.data);
 
-      if (message.type === "room-created") {
-        setRoomId(message.roomId);
-        setRoomLink(`${window.location.origin}/download/${message.roomId}`);
+      switch (message.type) {
+        case "room-created": {
+          setRoomId(message.roomId);
+          setRoomLink(`${window.location.origin}/download/${message.roomId}`);
 
-        if (passphraseRef.current) {
-          roomKeyPromiseRef.current = deriveRoomKey(
-            passphraseRef.current,
-            message.roomId,
-          );
+          roomKeyPromiseRef.current = passphraseRef.current
+            ? deriveRoomKey(passphraseRef.current, message.roomId)
+            : Promise.resolve(null);
+          return;
         }
-        return;
-      }
 
-      if (message.type === "peer-joined") {
-        setStatus("connecting");
+        case "peer-joined": {
+          setStatus("connecting");
 
-        const peerConnection = createPeerConnection();
-        const dataChannel = peerConnection.createDataChannel("data");
-        dataChannelRef.current = dataChannel;
+          const peerConnection = openPeerConnection();
+          const dataChannel = peerConnection.createDataChannel("data");
+          dataChannelRef.current = dataChannel;
 
-        dataChannel.addEventListener("open", () => {
-          sendFile();
-        });
+          dataChannel.addEventListener("open", () => {
+            sendFile();
+          });
 
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
 
-        await sendSignal("offer", { offer: peerConnection.localDescription });
-        return;
-      }
+          await signaling.send("offer", {
+            offer: peerConnection.localDescription,
+          });
+          return;
+        }
 
-      if (message.type === "answer") {
-        const { answer } = await unwrapSignal<{
-          answer: RTCSessionDescriptionInit;
-        }>(message);
-        await peerConnectionRef.current?.setRemoteDescription(answer);
-        return;
-      }
+        case "answer": {
+          const { answer } = await signaling.unwrap<{
+            answer: RTCSessionDescriptionInit;
+          }>(message);
+          await peerConnectionRef.current?.setRemoteDescription(answer);
+          return;
+        }
 
-      if (message.type === "ice-candidate") {
-        const { candidate } = await unwrapSignal<{
-          candidate: RTCIceCandidateInit;
-        }>(message);
-        await peerConnectionRef.current?.addIceCandidate(candidate);
-        return;
-      }
+        case "ice-candidate": {
+          const { candidate } = await signaling.unwrap<{
+            candidate: RTCIceCandidateInit;
+          }>(message);
+          await peerConnectionRef.current?.addIceCandidate(candidate);
+          return;
+        }
 
-      if (message.type === "peer-left") {
-        peerConnectionRef.current?.close();
-        peerConnectionRef.current = null;
-        dataChannelRef.current = null;
-        setStatus("waiting-for-peer");
-        return;
-      }
+        case "peer-left": {
+          peerConnectionRef.current?.close();
+          peerConnectionRef.current = null;
+          dataChannelRef.current = null;
+          setStatus("waiting-for-peer");
+          return;
+        }
 
-      if (message.type === "error") {
-        console.error(message.message);
+        case "error": {
+          console.error(message.message);
+          return;
+        }
       }
     });
 
     return () => {
-      signalingChannel.close();
+      signaling.close();
       peerConnectionRef.current?.close();
     };
   }, [enabled]);
@@ -231,11 +197,11 @@ export function useSendFile(enabled: boolean) {
         ? await hashPassphrase(passphrase)
         : null;
 
-      const channel = signalingChannelRef.current;
-      if (!channel) return;
+      const socket = signalingRef.current?.socket;
+      if (!socket) return;
 
       sendWhenOpen(
-        channel,
+        socket,
         JSON.stringify({ type: "create-room", passphraseHash }),
       );
     })();
