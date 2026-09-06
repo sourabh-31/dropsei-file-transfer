@@ -21,3 +21,4 @@ Dropsei uses WebSockets for WebRTC signaling to connect two devices. Once the co
 - TypeScript
 - WebRTC
 - WebSocket
+- PNPM Workspaces
