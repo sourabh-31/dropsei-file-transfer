@@ -1,4 +1,4 @@
-import { formatBytes } from "@/lib/format";
+import { formatBytes, truncateFilename } from "@/lib/format";
 import { CHUNK_SIZE, type FileMetadata } from "@/lib/webrtc";
 import { getVisualChunkBytes, getVisualChunkCount } from "@/lib/chunkGrid";
 import type { ReceiveProgress, ReceiveStatus } from "@/hooks/useReceiveFile";
@@ -47,7 +47,7 @@ export default function ReceivingScreen({
     <div className="my-auto grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_0.85fr] lg:gap-16">
       <div>
         <h2 className="m-0 text-3xl leading-none font-extrabold tracking-tight sm:text-4xl md:text-5xl">
-          {headline}
+          {truncateFilename(headline)}
         </h2>
         <div className="mt-10 flex flex-wrap items-end gap-6.5">
           <span className="text-6xl leading-[0.85] font-bold tracking-tighter text-accent-lime sm:text-7xl lg:text-8xl">

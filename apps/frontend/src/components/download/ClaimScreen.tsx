@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Button from "@/components/shared/Button";
-import { formatBytes } from "@/lib/format";
+import { formatBytes, truncateFilename } from "@/lib/format";
 import type { FileMetadata } from "@/lib/webrtc";
 
 interface ClaimScreenProps {
@@ -99,7 +99,7 @@ export default function ClaimScreen({
       <div className="mt-8">
         <div className="flex items-baseline gap-4.5 border-b border-border-subtle py-4.5">
           <span className="flex-1 truncate text-lg font-medium">
-            {fileMetadata.name}
+            {truncateFilename(fileMetadata.name)}
           </span>
           <span className="font-mono text-xs text-muted-soft">
             {formatBytes(fileMetadata.size)}

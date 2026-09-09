@@ -1,5 +1,5 @@
 import Button from "@/components/shared/Button";
-import { formatBytes } from "@/lib/format";
+import { formatBytes, truncateFilename } from "@/lib/format";
 import { useTransferStore } from "@/store/store";
 
 interface StagedScreenProps {
@@ -37,7 +37,7 @@ export default function StagedScreen({ onOpenChannel }: StagedScreenProps) {
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="min-w-0 flex-1 text-lg font-medium">
-                  {f.name}
+                  {truncateFilename(f.name)}
                 </span>
               </div>
               <div className="flex items-center justify-end gap-4.5">
