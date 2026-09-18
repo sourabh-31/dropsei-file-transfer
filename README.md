@@ -1,6 +1,6 @@
 # 🚀 Dropsei
 
-**Dropsei** is a peer-to-peer file transfer platform that lets you send files directly between devices using WebRTC. Files travel straight from sender to receiver — nothing is ever uploaded to or stored on a server.
+**Dropsei** is a peer-to-peer file transfer platform that lets you send files directly between devices using WebRTC. Files travel straight from sender to receiver, nothing is ever uploaded to or stored on a server.
 
 ## ✨ Features
 
@@ -13,7 +13,7 @@
 
 ## ⚙️ How It Works
 
-Dropsei uses WebSockets for WebRTC signaling to connect two devices. Once the connection is established, files are transferred directly between the peers through a WebRTC DataChannel — the signaling server only helps set up the connection and never touches the file data itself.
+Dropsei uses WebSockets for WebRTC signaling to connect two devices. Once the connection is established, files are transferred directly between the peers through a WebRTC DataChannel; the signaling server only helps set up the connection and never touches the file data itself.
 
 ## 🏗️ Project Structure
 
